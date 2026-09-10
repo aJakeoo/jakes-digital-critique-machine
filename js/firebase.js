@@ -28,14 +28,22 @@ import {
 // ── Firebase config ──────────────────────────────────────────────────────────
 // Firebase console → Project settings → General → Your apps → SDK setup → Config
 // The project must be on the Blaze plan for Storage to accept uploads.
+// This config is an identifier, not a secret. Every Firebase web app ships it
+// in plain JavaScript; access is controlled by database.rules.json and
+// storage.rules, not by hiding these values.
+//
+// databaseURL assumes the Realtime Database was created in us-central1, which
+// is the default region. A database in any other region uses a
+// <name>.<region>.firebasedatabase.app host instead, and this line has to match
+// it exactly or votes and comments silently never connect.
 export const FIREBASE_CONFIG = {
-  apiKey:            "PASTE_API_KEY",
-  authDomain:        "PASTE_PROJECT.firebaseapp.com",
-  databaseURL:       "https://PASTE_PROJECT-default-rtdb.firebaseio.com",
-  projectId:         "PASTE_PROJECT",
-  storageBucket:     "PASTE_PROJECT.firebasestorage.app",
-  messagingSenderId: "PASTE_SENDER_ID",
-  appId:             "PASTE_APP_ID",
+  apiKey:            "AIzaSyAUgKU5YAVb09Cj5o-eA9HQ0DZOQO9t3Pw",
+  authDomain:        "jakes-crit-machine.firebaseapp.com",
+  databaseURL:       "https://jakes-crit-machine-default-rtdb.firebaseio.com",
+  projectId:         "jakes-crit-machine",
+  storageBucket:     "jakes-crit-machine.firebasestorage.app",
+  messagingSenderId: "527901126393",
+  appId:             "1:527901126393:web:9ab785284e17df66b5fc28",
 };
 
 export const IS_CONFIGURED = !FIREBASE_CONFIG.apiKey.startsWith('PASTE');
