@@ -3,18 +3,20 @@
     ".read": true,
 
     "settings": {
-      ".write": true,
+      ".write": "auth != null && auth.uid == 'Sy5zPXFgB2UeBeWu272n9O9S2re2'",
       "critMode":        { ".validate": "newData.isBoolean()" },
       "commentsEnabled": { ".validate": "newData.isBoolean()" },
+      "unlocked":        { ".validate": "newData.isBoolean()" },
       "voteColors": {
         "up":   { ".validate": "newData.isString() && newData.val().matches(/^#[0-9a-fA-F]{6}$/)" },
         "down": { ".validate": "newData.isString() && newData.val().matches(/^#[0-9a-fA-F]{6}$/)" },
         "$other": { ".validate": false }
-      }
+      },
+      "$other": { ".validate": false }
     },
 
     "uploads": {
-      ".write": true,
+      ".write": "auth != null && auth.uid == 'Sy5zPXFgB2UeBeWu272n9O9S2re2'",
       "$uploadId": {
         ".validate": "newData.hasChildren(['name','fullURL','thumbURL']) || !newData.exists()",
         "name":      { ".validate": "newData.isString() && newData.val().length <= 300" },
@@ -26,16 +28,25 @@
         "height":    { ".validate": "newData.isNumber()" },
         "size":      { ".validate": "newData.isNumber()" },
         "createdAt": { ".validate": "newData.isNumber()" },
-        "up":        { ".validate": "newData.isNumber() && newData.val() >= 0" },
-        "down":      { ".validate": "newData.isNumber() && newData.val() >= 0" },
-        "$other":    { ".validate": false }
+
+        "up": {
+          ".write": "root.child('settings/unlocked').val() == true",
+          ".validate": "newData.isNumber() && ((!data.exists() && newData.val() == 0) || (newData.val() >= 0 && (newData.val() == data.val() + 1 || newData.val() == data.val() - 1)))"
+        },
+        "down": {
+          ".write": "root.child('settings/unlocked').val() == true",
+          ".validate": "newData.isNumber() && ((!data.exists() && newData.val() == 0) || (newData.val() >= 0 && (newData.val() == data.val() + 1 || newData.val() == data.val() - 1)))"
+        },
+
+        "$other": { ".validate": false }
       }
     },
 
     "comments": {
-      ".write": true,
+      ".write": "auth != null && auth.uid == 'Sy5zPXFgB2UeBeWu272n9O9S2re2'",
       "$uploadId": {
         "$commentId": {
+          ".write": "root.child('settings/unlocked').val() == true && !data.exists() && newData.exists()",
           ".validate": "newData.hasChildren(['text','createdAt']) || !newData.exists()",
           "text":      { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 1000" },
           "vote":      { ".validate": "newData.val() == 'up' || newData.val() == 'down' || newData.val() == null" },

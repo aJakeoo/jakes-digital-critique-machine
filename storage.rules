@@ -1,20 +1,20 @@
 rules_version = '2';
 
-// Open rules, matching the app: there is no sign-in, and the admin password is
-// a client-side convenience lock rather than real security. Fine for a wall of
-// classroom work that everyone in the room is meant to see and add to; do not
-// put anything confidential in this bucket.
+// Anyone can look at the work; only the signed-in admin can put anything into
+// the bucket or take it out. That closes the one path that could actually run
+// up a bill, since bytes stored and served are what cost money.
 service firebase.storage {
   match /b/{bucket}/o {
     match /uploads/{uploadId}/{fileName} {
       allow read: if true;
 
-      // Images only, capped so a stray file cannot fill the bucket.
-      allow write: if request.resource == null
-                   || (request.resource.contentType.matches('image/.*')
-                       && request.resource.size < 15 * 1024 * 1024);
-
-      allow delete: if true;
+      // request.resource is null on delete; on a write it must be a
+      // reasonably sized image.
+      allow write: if request.auth != null
+                   && request.auth.uid == 'Sy5zPXFgB2UeBeWu272n9O9S2re2'
+                   && (request.resource == null
+                       || (request.resource.contentType.matches('image/.*')
+                           && request.resource.size < 15 * 1024 * 1024));
     }
   }
 }
