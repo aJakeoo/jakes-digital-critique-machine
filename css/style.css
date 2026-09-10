@@ -34,24 +34,16 @@
   --i:         0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg:        #000000;
-    --bg-sub:    #0d0d0f;
-    --surface:   #171719;
-    --line:      rgba(255, 255, 255, .10);
-    --line-firm: rgba(255, 255, 255, .18);
-    --ink:       #f5f5f7;
-    --ink-soft:  #a1a1a6;
-    --ink-faint: #6e6e73;
-    --glass:     rgba(12, 12, 14, .72);
-    --shadow:    0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.45);
-    --shadow-lg: 0 2px 6px rgba(0,0,0,.5), 0 22px 60px rgba(0,0,0,.6);
-  }
-}
+/* Light only, on purpose: the wall is projected and shown in bright rooms,
+   and the vote gradients were tuned against a white ground. */
+:root { color-scheme: light; }
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
+
+/* Overlays below set display:grid/flex, which would otherwise beat the
+   default [hidden] rule and leave every one of them on screen at once. */
+[hidden] { display: none !important; }
 
 body {
   margin: 0;
@@ -83,10 +75,9 @@ code { font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace; f
   inset: -20vh -10vw;
   z-index: -1;
   pointer-events: none;
-  filter: blur(90px);
-  opacity: .5;
+  filter: blur(110px);
+  opacity: .22;
 }
-@media (prefers-color-scheme: dark) { .aurora { opacity: .34; } }
 
 .aurora span {
   position: absolute;
@@ -568,8 +559,11 @@ body.is-aiming .card-zoom { opacity: 0 !important; }
     background calc(.8s * (1 - var(--no-anim, 0))) var(--ease);
 }
 
-body.is-crit .card::before,
-.big-card::before { opacity: calc(var(--intensity) * .92); }
+body.is-crit .card::before { opacity: calc(var(--intensity) * .92); }
+
+/* Tighter and softer on the projector, where cards sit close together and
+   neighbouring glows would otherwise run into each other. */
+.big-card::before { inset: -10px; filter: blur(22px); opacity: calc(var(--intensity) * .5); }
 
 body.is-crit .card::before { animation: bloom 7s ease-in-out infinite alternate; }
 @keyframes bloom {
@@ -577,7 +571,9 @@ body.is-crit .card::before { animation: bloom 7s ease-in-out infinite alternate;
   to   { filter: blur(38px); transform: scale(1.045); }
 }
 
-body.is-crit .card { background: color-mix(in srgb, var(--surface) 86%, transparent); }
+/* Let the glow bleed through the card, but not so far that titles stop reading. */
+body.is-crit .card { background: color-mix(in srgb, var(--surface) 93%, transparent); }
+body.is-crit .hero-sub { display: none; }
 body.is-crit .card-image { border-radius: var(--radius); }
 
 /* In crit mode the numbers and notes step back; the preview holds them. */
@@ -1212,7 +1208,7 @@ body.is-crit .card-title { margin-bottom: 0; }
     var(--up-color)   max(0%, calc(var(--split) - 18%)),
     var(--down-color) min(100%, calc(var(--split) + 18%)),
     var(--down-color) 100%);
-  opacity: calc(var(--intensity) * .16);
+  opacity: calc(var(--intensity) * .09);
   transition: opacity .8s var(--ease), background .8s var(--ease);
   pointer-events: none;
 }
@@ -1373,9 +1369,10 @@ body.is-crit .card-title { margin-bottom: 0; }
 
 .bigscreen-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(clamp(180px, 15vw, 280px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(clamp(210px, 19vw, 360px), 1fr));
   gap: 30px;
-  align-content: start;
+  align-content: center;
+  justify-content: center;
   overflow-y: auto;
   padding: 18px;
   margin: -18px;

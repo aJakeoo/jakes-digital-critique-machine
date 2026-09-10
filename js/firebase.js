@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-//  Jake's Digital Critique Machine — data layer
+//  Jake's Digital Critique Machine: data layer
 //  Firebase Realtime Database (votes, comments, settings) + Storage (images)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -266,7 +266,7 @@ export async function uploadImage(file, onProgress) {
 async function deleteQuietly(path) {
   if (!path) return;
   try { await deleteObject(stRef(storage, path)); }
-  catch { /* already gone — not worth failing the whole purge over */ }
+  catch { /* already gone, not worth failing the whole purge over */ }
 }
 
 export async function deleteUpload(upload) {

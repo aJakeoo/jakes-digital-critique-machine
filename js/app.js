@@ -80,7 +80,6 @@ const onGalleryTab = () => $('.tab-panel[data-panel="gallery"]').classList.conta
 const chip = () => '<span class="chip" aria-hidden="true"></span>';
 const zoomIcon = () => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3H4a1 1 0 0 0-1 1v5m6 11H4a1 1 0 0 1-1-1v-5m12-11h5a1 1 0 0 1 1 1v5m-6 11h5a1 1 0 0 0 1-1v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 const checkIcon = () => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-const speechIcon = () => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3 1.2-4.4A8 8 0 1 1 21 12Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (c) => (
@@ -91,10 +90,10 @@ function escapeHtml(value) {
 // ── Palette dock ─────────────────────────────────────────────────────────────
 
 const HINTS = {
-  null:      'Pick a colour to vote, or the bubble to comment',
-  up:        'Now tap a piece to cast your vote',
-  down:      'Now tap a piece to cast your vote',
-  comment:   'Now tap a piece to write about it',
+  null:    'Pick a tool',
+  up:      'Tap a piece to vote',
+  down:    'Tap a piece to vote',
+  comment: 'Tap a piece to comment',
 };
 
 function setTool(tool) {
@@ -529,7 +528,7 @@ function renderBigScreen() {
   if (!state.bigScreen) return;
 
   const mode = $('#bigscreen-mode');
-  mode.textContent = state.critMode ? 'Crit mode — voting closed' : 'Voting open';
+  mode.textContent = state.critMode ? 'Voting closed' : 'Voting open';
   mode.className = state.critMode ? 'bigscreen-mode is-crit' : 'bigscreen-mode';
 
   if (!state.uploads.length) {

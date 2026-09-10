@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-//  Admin tab — password gate, uploads, crit mode, purge, and the share QR.
+//  Admin tab: password gate, uploads, crit mode, purge, and the share QR.
 //
 //  The password is a client-side convenience lock for a classroom, not real
 //  security. Anything a browser can reach, a determined student can reach too.
@@ -82,7 +82,7 @@ function initCritToggle() {
 
 // ── Vote colours ─────────────────────────────────────────────────────────────
 
-// Curated pairings that stay legible against both the light and dark shells.
+// Curated pairings that stay legible against the light shell.
 const COLOR_PRESETS = [
   { name: 'Classic',   up: '#30D158', down: '#FF375F' },
   { name: 'Ocean',     up: '#5AC8FA', down: '#5E5CE6' },
@@ -297,7 +297,7 @@ export function drawQR(holder, url, size) {
   if (!holder || holder.dataset.drawn === `${url}@${size}`) return;
 
   if (typeof window.QRCode !== 'function') {
-    holder.innerHTML = '<p class="muted small">QR library did not load — share the link instead.</p>';
+    holder.innerHTML = '<p class="muted small">QR library did not load. Share the link instead.</p>';
     return;
   }
 
@@ -346,7 +346,7 @@ function initShare() {
       await navigator.clipboard.writeText(shareURL());
       toast('Link copied.', 'good');
     } catch {
-      toast('Copy failed — select the link manually.', 'warn');
+      toast('Copy failed. Select the link manually.', 'warn');
     }
   });
 }
@@ -405,6 +405,7 @@ export function initAdmin(providedHooks) {
   hooks = providedHooks;
   initLock();
   initCritToggle();
+  initVoteColors();
   initUploads();
   initManage();
   initShare();
