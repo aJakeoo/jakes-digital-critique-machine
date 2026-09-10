@@ -7,8 +7,12 @@
 
 import {
   IS_CONFIGURED,
+  watchAdmin,
+  signInAdmin,
+  signOutAdmin,
   setCritMode,
   setCommentsEnabled,
+  setUnlocked,
   setVoteColors,
   DEFAULT_VOTE_COLORS,
   uploadImage,
@@ -16,43 +20,53 @@ import {
   purgeEverything,
 } from './firebase.js';
 
-const PASSWORD    = 'jj';
-const UNLOCK_KEY  = 'jdcm:admin';
-
 const $ = (sel) => document.querySelector(sel);
 
 let hooks = { getUploads: () => [], getCritMode: () => false };
 let unlocked = false;
 
-// ── Password gate ────────────────────────────────────────────────────────────
+// ── Sign-in gate ─────────────────────────────────────────────────────────────
+// Backed by real Firebase Auth rather than a shared word, because the security
+// rules key off the signed-in uid. Being signed in here is what actually grants
+// upload, delete, and lock rights; hiding the panel is only cosmetic.
 
-function unlock() {
-  unlocked = true;
-  try { sessionStorage.setItem(UNLOCK_KEY, '1'); } catch { /* private mode */ }
-  $('#admin-lock').hidden = true;
-  $('#admin-panel').hidden = false;
-  renderShareCode();
-  renderManageList();
+function applyAdmin(user) {
+  unlocked = !!user;
+  $('#admin-lock').hidden = unlocked;
+  $('#admin-panel').hidden = !unlocked;
+
+  if (unlocked) {
+    $('#admin-who').textContent = user.email || user.displayName || 'Signed in';
+    renderShareCode();
+    renderManageList();
+  }
 }
 
 function initLock() {
-  try { unlocked = sessionStorage.getItem(UNLOCK_KEY) === '1'; } catch { unlocked = false; }
-  if (unlocked) { unlock(); return; }
-
-  $('#admin-lock-form').addEventListener('submit', (event) => {
-    event.preventDefault();
-    const field = $('#admin-password');
-    if (field.value === PASSWORD) {
-      field.value = '';
-      $('#admin-lock-error').hidden = true;
-      unlock();
-    } else {
-      field.value = '';
+  $('#admin-signin').addEventListener('click', async () => {
+    const button = $('#admin-signin');
+    button.disabled = true;
+    $('#admin-lock-error').hidden = true;
+    try {
+      await signInAdmin();
+    } catch (error) {
+      $('#admin-lock-error').textContent =
+        error.code === 'auth/popup-closed-by-user'
+          ? 'Sign-in cancelled.'
+          : `Could not sign in: ${error.message}`;
       $('#admin-lock-error').hidden = false;
       $('#admin-lock').classList.add('did-shake');
       setTimeout(() => $('#admin-lock').classList.remove('did-shake'), 500);
+    } finally {
+      button.disabled = false;
     }
   });
+
+  $('#admin-signout').addEventListener('click', async () => {
+    try { await signOutAdmin(); } catch (error) { toast(error.message, 'bad'); }
+  });
+
+  watchAdmin(applyAdmin);
 }
 
 // ── Crit mode ────────────────────────────────────────────────────────────────
@@ -65,6 +79,17 @@ function initCritToggle() {
     } catch (error) {
       event.target.checked = !on;
       toast(`Could not change crit mode: ${error.message}`, 'bad');
+    }
+  });
+
+  $('#unlocked-toggle').addEventListener('change', async (event) => {
+    const on = event.target.checked;
+    try {
+      await setUnlocked(on);
+      toast(on ? 'Wall is open.' : 'Wall is locked.', on ? 'good' : 'warn');
+    } catch (error) {
+      event.target.checked = !on;
+      toast(`Could not change the lock: ${error.message}`, 'bad');
     }
   });
 
@@ -418,6 +443,9 @@ export function initAdmin(providedHooks) {
 
 /** Called by app.js whenever the live data changes. */
 export function notifyAdmin(state) {
+  $('#unlocked-toggle').checked = state.unlocked;
+  $('#unlocked-state').textContent = state.unlocked ? 'Open' : 'Locked';
+
   $('#crit-toggle').checked = state.critMode;
   $('#crit-state').textContent = state.critMode ? 'On' : 'Off';
 

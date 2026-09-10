@@ -24,6 +24,16 @@ import {
   deleteObject,
   listAll,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 // ── Firebase config ──────────────────────────────────────────────────────────
 // Firebase console → Project settings → General → Your apps → SDK setup → Config
@@ -50,12 +60,49 @@ export const IS_CONFIGURED = !FIREBASE_CONFIG.apiKey.startsWith('PASTE');
 
 let db = null;
 let storage = null;
+let auth = null;
 
 if (IS_CONFIGURED) {
   const app = initializeApp(FIREBASE_CONFIG);
   db      = getDatabase(app);
   storage = getStorage(app);
+  auth    = getAuth(app);
+  // Keep the admin signed in across reloads so a projector restart mid-crit
+  // does not lock Jake out of his own wall.
+  setPersistence(auth, browserLocalPersistence).catch(() => {});
 }
+
+// ── Admin authentication ─────────────────────────────────────────────────────
+// Students are never signed in. The single admin account is what the security
+// rules key off, so uploading, deleting, and locking are impossible for anyone
+// else no matter what they send at the API directly.
+
+export function watchAdmin(callback) {
+  if (!auth) { callback(null); return () => {}; }
+  return onAuthStateChanged(auth, (user) => callback(user));
+}
+
+export async function signInAdmin() {
+  const provider = new GoogleAuthProvider();
+  // Always show the chooser, so signing in on a shared classroom machine does
+  // not silently reuse whichever Google account happens to be active.
+  provider.setCustomParameters({ prompt: 'select_account' });
+  try {
+    return await signInWithPopup(auth, provider);
+  } catch (error) {
+    // Popups get blocked on plenty of phones; fall back to a full redirect.
+    if (error.code === 'auth/popup-blocked' || error.code === 'auth/operation-not-supported-in-this-environment') {
+      return signInWithRedirect(auth, provider);
+    }
+    throw error;
+  }
+}
+
+export function signOutAdmin() {
+  return signOut(auth);
+}
+
+export const currentAdmin = () => (auth ? auth.currentUser : null);
 
 // ── Ordering ─────────────────────────────────────────────────────────────────
 // Realtime Database push keys are lexicographically chronological and are
@@ -97,6 +144,20 @@ export function watchComments(uploadId, callback) {
 
 export function setCritMode(on) {
   return set(dbRef(db, 'settings/critMode'), on === true);
+}
+
+// ── Wall lock ────────────────────────────────────────────────────────────────
+// Enforced in the security rules, not just here. While locked, Firebase itself
+// refuses votes and comments, so hiding the UI is a courtesy rather than the
+// actual control. Absent means locked, so a fresh database starts closed.
+
+export function watchUnlocked(callback) {
+  if (!db) { callback(false); return () => {}; }
+  return onValue(dbRef(db, 'settings/unlocked'), (snap) => callback(snap.val() === true));
+}
+
+export function setUnlocked(on) {
+  return set(dbRef(db, 'settings/unlocked'), on === true);
 }
 
 export function watchCommentsEnabled(callback) {

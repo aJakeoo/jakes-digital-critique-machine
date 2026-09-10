@@ -16,6 +16,7 @@ import {
   watchCritMode,
   watchComments,
   watchCommentsEnabled,
+  watchUnlocked,
   watchVoteColors,
   DEFAULT_VOTE_COLORS,
   getVote,
@@ -36,6 +37,7 @@ const state = {
   uploads: [],
   critMode: false,
   commentsEnabled: true,
+  unlocked: false,
   bigScreen: false,
   voteColors: { ...DEFAULT_VOTE_COLORS },
   tool: null,               // null | 'up' | 'down' | 'comment'
@@ -117,7 +119,10 @@ function setTool(tool) {
 }
 
 function syncDock() {
-  const visible = IS_CONFIGURED && onGalleryTab() && !state.critMode && !state.bigScreen;
+  // The lock is enforced in the security rules; hiding the dock just spares
+  // people from tapping at a wall that would refuse them anyway.
+  const visible = IS_CONFIGURED && onGalleryTab()
+    && state.unlocked && !state.critMode && !state.bigScreen;
   dock.hidden = !visible;
   document.body.classList.toggle('has-dock', visible);
 
@@ -577,6 +582,14 @@ if (IS_CONFIGURED) {
     notifyAdmin(state);
   });
 
+  watchUnlocked((on) => {
+    state.unlocked = on;
+    document.body.classList.toggle('is-locked-wall', !on);
+    $('#lock-banner').hidden = on || state.critMode;
+    syncDock();
+    notifyAdmin(state);
+  });
+
   watchCommentsEnabled((on) => {
     state.commentsEnabled = on;
     document.body.classList.toggle('no-comments', !on);
@@ -603,6 +616,7 @@ if (IS_CONFIGURED) {
     state.critMode = on;
     document.body.classList.toggle('is-crit', on);
     critBanner.hidden = !on;
+    $('#lock-banner').hidden = state.unlocked || on;
     syncDock();
     renderGrid();
     renderBigScreen();
