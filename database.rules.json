@@ -1,0 +1,50 @@
+{
+  "rules": {
+    ".read": true,
+
+    "settings": {
+      ".write": true,
+      "critMode":        { ".validate": "newData.isBoolean()" },
+      "commentsEnabled": { ".validate": "newData.isBoolean()" },
+      "voteColors": {
+        "up":   { ".validate": "newData.isString() && newData.val().matches(/^#[0-9a-fA-F]{6}$/)" },
+        "down": { ".validate": "newData.isString() && newData.val().matches(/^#[0-9a-fA-F]{6}$/)" },
+        "$other": { ".validate": false }
+      }
+    },
+
+    "uploads": {
+      ".write": true,
+      "$uploadId": {
+        ".validate": "newData.hasChildren(['name','fullURL','thumbURL']) || !newData.exists()",
+        "name":      { ".validate": "newData.isString() && newData.val().length <= 300" },
+        "fullURL":   { ".validate": "newData.isString()" },
+        "thumbURL":  { ".validate": "newData.isString()" },
+        "fullPath":  { ".validate": "newData.isString()" },
+        "thumbPath": { ".validate": "newData.isString()" },
+        "width":     { ".validate": "newData.isNumber()" },
+        "height":    { ".validate": "newData.isNumber()" },
+        "size":      { ".validate": "newData.isNumber()" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+        "up":        { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "down":      { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "$other":    { ".validate": false }
+      }
+    },
+
+    "comments": {
+      ".write": true,
+      "$uploadId": {
+        "$commentId": {
+          ".validate": "newData.hasChildren(['text','createdAt']) || !newData.exists()",
+          "text":      { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 1000" },
+          "vote":      { ".validate": "newData.val() == 'up' || newData.val() == 'down' || newData.val() == null" },
+          "createdAt": { ".validate": "newData.isNumber()" },
+          "$other":    { ".validate": false }
+        }
+      }
+    },
+
+    "$other": { ".validate": false }
+  }
+}

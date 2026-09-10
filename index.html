@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fbfbfd" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<title>Jake's Digital Critique Machine</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='36' cy='50' r='26' fill='%2330D158'/><circle cx='64' cy='50' r='26' fill='%23FF375F' opacity='.85'/></svg>">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true">
+  <span></span><span></span><span></span><span></span>
+</div>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <h1 class="wordmark">
+      <span class="wordmark-dots" aria-hidden="true"><i></i><i></i></span>
+      Jake's Digital Critique Machine
+    </h1>
+
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab is-active" data-tab="gallery" role="tab" aria-selected="true">Gallery</button>
+      <button class="tab" data-tab="admin" role="tab" aria-selected="false">Admin</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── Gallery ──────────────────────────────────────────────────────────── -->
+  <section class="tab-panel is-active" data-panel="gallery" role="tabpanel">
+
+    <div class="hero">
+      <h2>Look closely.<br><em>Then say something.</em></h2>
+      <p class="hero-sub">
+        Pick a colour from the palette, then tap a piece to cast your vote.
+        Choose the bubble to leave a note instead.
+      </p>
+      <p class="count" id="count-label"></p>
+    </div>
+
+    <div class="banner" id="crit-banner" hidden>
+      <strong>Crit mode</strong>
+      <span>Voting and comments are closed. Tap any piece for a large preview.</span>
+    </div>
+
+    <div class="notice" id="setup" hidden>
+      <h3>Almost there</h3>
+      <p>
+        Paste your Firebase project config into <code>js/firebase.js</code> to switch this on.
+        The project needs the Blaze plan for Storage uploads to work.
+      </p>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="empty" id="empty" hidden>
+      <div class="empty-art" aria-hidden="true"><i></i><i></i><i></i></div>
+      <h3>Nothing on the wall yet</h3>
+      <p>Work shows up here the moment it is uploaded from the Admin tab.</p>
+    </div>
+  </section>
+
+  <!-- ── Admin ────────────────────────────────────────────────────────────── -->
+  <section class="tab-panel" data-panel="admin" role="tabpanel">
+
+    <div class="lock" id="admin-lock">
+      <div class="lock-card">
+        <div class="lock-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M7 10V7a5 5 0 0 1 10 0v3m-11 0h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h2>Admin</h2>
+        <p>Enter the password to manage the wall.</p>
+        <form id="admin-lock-form">
+          <input type="password" id="admin-password" placeholder="Password" autocomplete="current-password" spellcheck="false">
+          <button type="submit">Unlock</button>
+        </form>
+        <p class="lock-error" id="admin-lock-error" hidden>That's not it. Try again.</p>
+      </div>
+    </div>
+
+    <div class="admin" id="admin-panel" hidden>
+
+      <!-- Modes -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Modes</h3>
+          <p>Change how the room is using the wall right now.</p>
+        </div>
+
+        <label class="switch-row">
+          <span class="switch-copy">
+            <b>Crit mode</b>
+            <small>Closes voting and comments. Each card drops to just the image and its vote gradient; tapping one opens the large preview with the full tally and every comment.</small>
+          </span>
+          <span class="switch-side">
+            <em id="crit-state">Off</em>
+            <input type="checkbox" id="crit-toggle" class="switch">
+            <i class="switch-track" aria-hidden="true"></i>
+          </span>
+        </label>
+
+        <label class="switch-row">
+          <span class="switch-copy">
+            <b>Comments</b>
+            <small>When off, the comment tool disappears from the palette. Notes already left stay where they are.</small>
+          </span>
+          <span class="switch-side">
+            <em id="comments-state">On</em>
+            <input type="checkbox" id="comments-toggle" class="switch" checked>
+            <i class="switch-track" aria-hidden="true"></i>
+          </span>
+        </label>
+
+        <label class="switch-row">
+          <span class="switch-copy">
+            <b>Big screen mode</b>
+            <small>Turns this device into the projector view for AirPlay or casting: every piece with live tallies, plus a QR code the room can scan to vote. Press Esc to leave.</small>
+          </span>
+          <span class="switch-side">
+            <em id="bigscreen-state">Off</em>
+            <input type="checkbox" id="bigscreen-toggle" class="switch">
+            <i class="switch-track" aria-hidden="true"></i>
+          </span>
+        </label>
+      </div>
+
+      <!-- Vote colours -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Vote colours</h3>
+          <p>The two colours people choose between. Everyone sees the pair you set here.</p>
+        </div>
+
+        <div class="color-row">
+          <label class="color-field">
+            <span>First colour</span>
+            <input type="color" id="color-up" value="#30D158">
+          </label>
+          <label class="color-field">
+            <span>Second colour</span>
+            <input type="color" id="color-down" value="#FF375F">
+          </label>
+          <div class="color-preview" id="color-preview" aria-hidden="true">
+            <span class="chip chip-up"></span>
+            <span class="chip chip-down"></span>
+          </div>
+          <button type="button" class="ghost" id="color-reset">Reset</button>
+        </div>
+
+        <div class="presets" id="color-presets"></div>
+      </div>
+
+      <!-- Upload -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Upload work</h3>
+          <p>Full resolution is kept for previews; a lighter copy is generated for the grid.</p>
+        </div>
+
+        <div class="drop" id="drop-zone" tabindex="0" role="button" aria-label="Choose images to upload">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0-4.5 4.5M12 4l4.5 4.5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <b>Drop images here</b>
+          <small>or click to choose. They appear in the order you add them, for everyone.</small>
+        </div>
+        <input type="file" id="file-input" accept="image/*" multiple hidden>
+
+        <div class="queue" id="upload-queue" hidden></div>
+      </div>
+
+      <!-- Manage -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3>On the wall</h3>
+          <p id="manage-count">Nothing uploaded yet</p>
+        </div>
+        <ul class="manage-list" id="manage-list"></ul>
+
+        <div class="danger">
+          <div>
+            <b>Purge everything</b>
+            <small>Deletes every image, vote, and comment. There is no undo.</small>
+          </div>
+          <button type="button" id="purge-button">Purge all</button>
+        </div>
+      </div>
+
+      <!-- Share -->
+      <div class="panel panel-qr">
+        <div class="panel-head">
+          <h3>Share the wall</h3>
+          <p>Click the code to blow it up full screen.</p>
+        </div>
+
+        <button type="button" class="qr-card" id="qr-card">
+          <div class="qr-code" id="qr-code"></div>
+          <span class="qr-hint">Tap to enlarge</span>
+        </button>
+
+        <div class="qr-link">
+          <code id="qr-url"></code>
+          <button type="button" class="ghost" id="qr-copy">Copy</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ── Palette dock ───────────────────────────────────────────────────────── -->
+<div class="dock" id="dock" hidden>
+  <div class="dock-inner">
+    <button class="tool tool-up" data-tool="up" aria-pressed="false" aria-label="Vote with the first colour">
+      <span class="chip"></span>
+    </button>
+    <button class="tool tool-down" data-tool="down" aria-pressed="false" aria-label="Vote with the second colour">
+      <span class="chip"></span>
+    </button>
+    <span class="dock-divider" aria-hidden="true"></span>
+    <button class="tool tool-comment" id="tool-comment" data-tool="comment" aria-pressed="false" aria-label="Leave a comment">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3 1.2-4.4A8 8 0 1 1 21 12Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+  <p class="dock-hint" id="dock-hint">Pick a colour to vote, or the bubble to comment</p>
+</div>
+
+<!-- ── Comment sheet ──────────────────────────────────────────────────────── -->
+<div class="sheet" id="comment-sheet" hidden>
+  <div class="sheet-backdrop" id="sheet-backdrop"></div>
+
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-label="Leave a comment">
+    <button class="sheet-close" id="sheet-close" aria-label="Cancel">
+      <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+
+    <div class="sheet-head">
+      <img id="sheet-thumb" alt="">
+      <div>
+        <span class="sheet-number" id="sheet-number"></span>
+        <h3 id="sheet-title"></h3>
+      </div>
+    </div>
+
+    <form id="sheet-form">
+      <textarea id="sheet-text" rows="3" maxlength="1000" placeholder="What do you notice? What would you push further?"></textarea>
+      <div class="sheet-foot">
+        <span class="sheet-meter"><b id="sheet-count">0</b> / 1000</span>
+        <button type="submit" id="sheet-submit">Post comment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Lightbox ───────────────────────────────────────────────────────────── -->
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lightbox-close" id="lightbox-close" aria-label="Close preview">
+    <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+
+  <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Previous">
+    <svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Next">
+    <svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+
+  <div class="lightbox-stage">
+    <img id="lightbox-img" alt="">
+  </div>
+
+  <aside class="lightbox-info">
+    <div class="lightbox-head">
+      <span class="lightbox-number" id="lightbox-number"></span>
+      <h3 id="lightbox-title"></h3>
+    </div>
+    <div class="lightbox-tally">
+      <span class="vote vote-up"><span class="chip"></span><b id="lightbox-up">0</b></span>
+      <span class="vote vote-down"><span class="chip"></span><b id="lightbox-down">0</b></span>
+    </div>
+    <div class="lightbox-bar" aria-hidden="true"><i></i></div>
+    <div class="lightbox-comments" id="lightbox-comments"></div>
+  </aside>
+</div>
+
+<!-- ── Big screen ─────────────────────────────────────────────────────────── -->
+<div class="bigscreen" id="bigscreen" hidden>
+  <header class="bigscreen-bar">
+    <div>
+      <h2>Jake's Digital Critique Machine</h2>
+      <p class="bigscreen-mode" id="bigscreen-mode">Voting open</p>
+    </div>
+    <button type="button" class="bigscreen-exit" id="bigscreen-exit">Exit</button>
+  </header>
+
+  <div class="bigscreen-body">
+    <div class="bigscreen-grid" id="bigscreen-grid"></div>
+
+    <aside class="bigscreen-scan">
+      <p class="bigscreen-scan-title">Scan to vote</p>
+      <div class="bigscreen-qr" id="bigscreen-qr"></div>
+      <code id="bigscreen-url"></code>
+    </aside>
+  </div>
+</div>
+
+<!-- ── Full screen QR ─────────────────────────────────────────────────────── -->
+<div class="qr-overlay" id="qr-overlay" hidden>
+  <div class="qr-big">
+    <p>Scan to open the wall</p>
+    <div class="qr-big-code" id="qr-big-code"></div>
+    <code id="qr-big-url"></code>
+    <small>Click anywhere to close</small>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

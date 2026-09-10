@@ -1,0 +1,20 @@
+rules_version = '2';
+
+// Open rules, matching the app: there is no sign-in, and the admin password is
+// a client-side convenience lock rather than real security. Fine for a wall of
+// classroom work that everyone in the room is meant to see and add to; do not
+// put anything confidential in this bucket.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /uploads/{uploadId}/{fileName} {
+      allow read: if true;
+
+      // Images only, capped so a stray file cannot fill the bucket.
+      allow write: if request.resource == null
+                   || (request.resource.contentType.matches('image/.*')
+                       && request.resource.size < 40 * 1024 * 1024);
+
+      allow delete: if true;
+    }
+  }
+}
